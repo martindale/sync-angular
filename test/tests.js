@@ -3,57 +3,80 @@ describe('Basic functionality', function(){
 	var sa;
 
 	beforeEach(function(){
-		sa = new syncLayerFactory();
+		sa = new SyncObject({
+			pk: 'pk',
+			prefix: 'testing',
+			saveToServer: function(){
+				console.log('saving to server');
+			},
+			getAllFromServer: function(){
+				console.log('getting from server');
+			},
+			deleteFromServer: function(){
+				console.log('getting from server');
+			},
+			lsFilter: function(object){
+				return object; 
+			},
+			goOffline: function(){},
+			goOnline: function(){},
+			postProcessLS: function(){},
+			lSFilter: function(){},
+			sync: function(){},
+		});
 	});
 
 	it('Should be an object which instansiates with a number of basic methods', function(){
 		
-		expect(typeof sa.setSync                    == 'function').toBe(true);
-		expect(typeof sa.setLSFilter                == 'function').toBe(true);
-		expect(typeof sa.setPK                      == 'function').toBe(true);
-		expect(typeof sa.setPrefix                  == 'function').toBe(true);
-		expect(typeof sa.setSaveToServer            == 'function').toBe(true);
-		expect(typeof sa.setGetAllFromServer        == 'function').toBe(true);
-		expect(typeof sa.setDeleteFromServer        == 'function').toBe(true);
-		expect(typeof sa.setGetFromServer           == 'function').toBe(true);
-		expect(typeof sa.setGoOffline               == 'function').toBe(true);
-		expect(typeof sa.setGoOnline                == 'function').toBe(true);
-		expect(typeof sa.setPostProcessLS           == 'function').toBe(true);
-		expect(typeof sa.$get                       == 'function').toBe(true);
+		expect(typeof sa.sync                    == 'function').toBe(true);
+		expect(typeof sa.lSFilter                == 'function').toBe(true);
+		expect(typeof sa.pk                      == 'string').toBe(true);
+		expect(typeof sa.prefix                  == 'string').toBe(true);
+		expect(typeof sa.saveToServer            == 'function').toBe(true);
+		expect(typeof sa.getAllFromServer        == 'function').toBe(true);
+		expect(typeof sa.deleteFromServer        == 'function').toBe(true);
+		expect(typeof sa.getFromServer           == 'function').toBe(true);
+		expect(typeof sa.goOffline               == 'function').toBe(true);
+		expect(typeof sa.goOnline                == 'function').toBe(true);
+		expect(typeof sa.postProcessLS           == 'function').toBe(true);
 
-		//Should get an object from the $get method
-		expect(typeof sa.$get()                     == 'object').toBe(true);
 	});
+
+
 });
 
 describe('offline/online functioning and detection', function(){
 	
-	var sa;
 	var sync;
+	
+	//A dummy server call which can create some fake data
+	var dummyServerCall = function(){
+		return {
+				array: [
+					{pk: 1, text: "Record 1"},
+					{pk: 2, text: "Record 2"},
+				],
+				object: {pk: 3, text: "Record 3"},
+		};
+	};
 
 	beforeEach(function(){
 		window.localStorage.clear(); //clear before starting
-
-		//A dummy server call which can create some fake data
-		var dummyServerCall = function(){
-			return {
-					array: [
-						{pk: 1, text: "Record 1"},
-						{pk: 2, text: "Record 2"},
-					],
-					object: {pk: 3, text: "Record 3"},
-			};
-		};
-		sa = new syncLayerFactory();
-		sa.setPK('pk');
-		sa.setPrefix('test');
-		sa.setSaveToServer(function(data){return data; }); //Return some magic number to demonstrate it is working
-		sa.setGetAllFromServer(function(){
-			console.log('Server Call mock accessed');
-			return dummyServerCall.array;
-		})
-
-		sync = sa.$get();
+		sync = new SyncObject({
+			pk: 'pk',
+			prefix: 'testing',
+			saveToServer: function(data){return data; },
+			getAllFromServer: function(){
+				console.log('Server Call mock accessed');
+				return dummyServerCall.array;
+			},
+			deleteFromServer: function(){
+				console.log('getting from server');
+			},
+			lsFilter: function(object){
+				return object; 
+			},
+		});
 	});
 	
 	//This assumes the computer with testing is online 
@@ -74,7 +97,6 @@ describe('offline/online functioning and detection', function(){
 
 describe('Basic functionality', function(){
 	
-	var sa;
 	var sync;
 
 	beforeEach(function(){
@@ -91,40 +113,41 @@ describe('Basic functionality', function(){
 			};
 		};
 
-		sa = new syncLayerFactory();
-		sa.setPK('pk');
-		sa.setPrefix('test');
-		sa.setSaveToServer(function(key, data){
+		sync = new SyncObject({
+			pk: 'pk',
+			prefix: 'testing',
+			saveToServer: function(key, data){
+				var returnObject = {
+					success: function(c) { c('success on saving to server. Key: ' + key + ' data: ' + data.data); return returnObject; },
+					error: function(c) { c(); return returnObject; }  //no error, so don't put anything in the callback
+				};
+			
+				return returnObject; 
+			},
+			getAllFromServer: function(){
+				console.log('Server Call mock accessed');
 
-			var returnObject = {
-				success: function(c) { c('success on saving to server. Key: ' + key + ' data: ' + data.data); return returnObject; },
-				error: function(c) { c(); return returnObject; }  //no error, so don't put anything in the callback
-			};
-		
-			return returnObject; 
-		}); //Return some magic number to demonstrate it is working
-		sa.setGetAllFromServer(function(){
-			console.log('Server Call mock accessed');
-
-			var returnObject = {
-				success: function(c) { c(dummyServerCall().array); return returnObject; },
-				error: function(c) { c(); return returnObject; }  //no error, so don't put anything in the callback
-			};
+				var returnObject = {
+					success: function(c) { c(dummyServerCall().array); return returnObject; },
+					error: function(c) { c(); return returnObject; }  //no error, so don't put anything in the callback
+				};
 			
 			return returnObject;
+			},
+			deleteFromServer: function(){
+				console.log('getting from server');
+			},
+			lsFilter: function(object){
+				return object; 
+			},
 		});
-
-		sync = sa.$get();
 
 		//Force the sync object to be online
 		sync.testing(true);
 	});
 
-	it('Should create a sync layer object with the $get()', function(){
-		expect(typeof sync == 'object').toBe(true);
-	});
-
 	it('Should get all from the server', function(){
+		console.log(sync);
 		
 		sync.getAll({pk: 2, test: 1}).success(function(data){
 			console.log('data from server: ', data);
