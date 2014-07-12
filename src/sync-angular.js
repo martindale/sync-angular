@@ -482,6 +482,10 @@ var syncLayerFactory = function (){
 					}
 
 					if(isOnline()) {
+
+						if(testingOverride)
+							console.log('getting all from server');
+
 						return getAllFromServer(params)
 							.error(function(e){
 								console.error(e);
@@ -520,6 +524,10 @@ var syncLayerFactory = function (){
 
 					}
 					else {//get everything from local storage
+						
+						if(testingOverride)
+							console.log('getting all from local storage');
+
 						var result = getAllLS(params);
 						return {
 							success: function(c){c(result);}

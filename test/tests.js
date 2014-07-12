@@ -1,18 +1,3 @@
-
-
-window.localStorage.clear() //clear before starting
-console.log('online?', navigator.onLine);
-//A dummy server call which can create some fake data
-var dummyServerCall = function(){
-	return {
-			array: [
-				{pk: 1, text: "Record 1"},
-				{pk: 2, text: "Record 2"},
-			],
-			object: {pk: 3, text: "Record 3"},
-	};
-};
-
 describe('Basic functionality', function(){
 	
 	var sa;
@@ -39,19 +24,26 @@ describe('Basic functionality', function(){
 		//Should get an object from the $get method
 		expect(typeof sa.$get()                     == 'object').toBe(true);
 	});
-
-	
 });
 
 describe('offline/online functioning and detection', function(){
-	
-	window.localStorage.clear() //clear before starting
-	console.log('online?', navigator.onLine);
 	
 	var sa;
 	var sync;
 
 	beforeEach(function(){
+		window.localStorage.clear(); //clear before starting
+
+		//A dummy server call which can create some fake data
+		var dummyServerCall = function(){
+			return {
+					array: [
+						{pk: 1, text: "Record 1"},
+						{pk: 2, text: "Record 2"},
+					],
+					object: {pk: 3, text: "Record 3"},
+			};
+		};
 		sa = new syncLayerFactory();
 		sa.setPK('pk');
 		sa.setPrefix('test');
@@ -81,14 +73,24 @@ describe('offline/online functioning and detection', function(){
 });
 
 describe('Basic functionality', function(){
-
-	window.localStorage.clear() //clear before starting
-	console.log('online?', navigator.onLine);
 	
 	var sa;
 	var sync;
 
 	beforeEach(function(){
+		window.localStorage.clear(); //clear before starting
+
+		//A dummy server call which can create some fake data
+		var dummyServerCall = function(){
+			return {
+					array: [
+						{pk: 1, text: "Record 1"},
+						{pk: 2, text: "Record 2"},
+					],
+					object: {pk: 3, text: "Record 3"},
+			};
+		};
+
 		sa = new syncLayerFactory();
 		sa.setPK('pk');
 		sa.setPrefix('test');
@@ -98,7 +100,7 @@ describe('Basic functionality', function(){
 
 			var returnObject = {
 				success: function(c) { c(dummyServerCall().array); return returnObject; },
-				error: function(c) { c(); return returnObject; } 
+				error: function(c) { c(); return returnObject; }  //no error, so don't put anything in the callback
 			};
 			
 			return returnObject;
@@ -122,9 +124,26 @@ describe('Basic functionality', function(){
 		});
 	});
 
-	it('Should allow a passthrough save to server when online as a matter of default', function(){
 
+	it('Should retain server data after going offline', function(){
 		
+		sync.getAll({pk: 2, test: 1}).success(function(data){
+			console.log('data from server: ', data);
+			expect(data[1].pk == 2).toBe(true);
+		});
+		
+		//Go offline
+		sync.testing(false);
+		expect(sync.testing()).toBe(false); //expect the thing to be offline
+
+		sync.getAll({pk: 2, test: 1}).success(function(data){
+			console.log('local storage data is ', data);
+			expect(data[1].pk == 2).toBe(true);
+
+			//expect there now to be a key from SA's internals
+			expect(typeof data[1].saKey !== 'undefined').toBe(true);
+		});
 	});
+
 });
 
