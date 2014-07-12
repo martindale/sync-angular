@@ -94,7 +94,15 @@ describe('Basic functionality', function(){
 		sa = new syncLayerFactory();
 		sa.setPK('pk');
 		sa.setPrefix('test');
-		sa.setSaveToServer(function(data){return data; }); //Return some magic number to demonstrate it is working
+		sa.setSaveToServer(function(key, data){
+
+			var returnObject = {
+				success: function(c) { c('success on saving to server. Key: ' + key + ' data: ' + data.data); return returnObject; },
+				error: function(c) { c(); return returnObject; }  //no error, so don't put anything in the callback
+			};
+		
+			return returnObject; 
+		}); //Return some magic number to demonstrate it is working
 		sa.setGetAllFromServer(function(){
 			console.log('Server Call mock accessed');
 
@@ -124,7 +132,6 @@ describe('Basic functionality', function(){
 		});
 	});
 
-
 	it('Should retain server data after going offline', function(){
 		
 		sync.getAll({pk: 2, test: 1}).success(function(data){
@@ -145,5 +152,11 @@ describe('Basic functionality', function(){
 		});
 	});
 
+	it('Should save to the server when called and return a response back appropriately', function(){
+		sync.save(1, {data: 123}).success(function(serverData){
+			expect(serverData === 'success on saving to server. Key: 1 data: 123').toBe(true);
+		});
+	});
+	
 });
 
