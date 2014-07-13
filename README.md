@@ -1,7 +1,6 @@
 ##Sync-Angular
 
 version 0.01
-state: pre-alpha - highly unstable
 
 A humble attempt at a transparent offline sync layer for AngularJS data-providers. The idea being to operate as a normal provider
 but with the capacity to and retrieve records when the browser is detected as being offline. 
@@ -34,74 +33,31 @@ The overall behaviour will be:
 		- Remove each upon saving successfully from the 'records-saved'. 
 	
 ### Examples of use
-	
-#### Simple pull to server 
 
-	conChecklistApp.factory('RoomSvc', function($http){
-
-		//Create an instance of the sync object
-		var instance = syncLayerFactory();  
-
-		//set the primary key of this particular resource
-		instance.setPK('id');
-
-		//Set a prefix for this particular resource
-		instance.setPrefix('rooms')
-
-		//Call this method when performing a getAll() to pull data from the server if online
-		instance.setGetAllFromServer(function() {
-			return $http.get('/walls_ceilings/loadrooms');
-		});
-
-		//Call this method when performing a get() to get from the server. 
-		instance.setGetFromServer(function(id, loc) {
-			return $http.get('/walls_ceilings/room/' + id);
-		});
-
-		//Return the object for Angular to use
-		return instance.$get(); 
+	var sync = new SyncObject({
+		pk: 'pk', 						//Set the primary key field/s
+		prefix: 'testing', 					//Give local-storage prefix
+		saveToServer: function(id, data){
+			console.log('saving to server id: ', id, data);  //set a function for saving to server
+		},
+		getAllFromServer: function(){ 				//Set a function for fetching from server
+			console.log('getting from server');
+		},
+		deleteFromServer: function(){ 				//Set a function to delete
+			console.log('getting from server');
+		}
 	});
 
 
+	//Call this function, should fetch from server when online 
+	//and fetch from local-storage when browser offline.
 
-#### Save to server only
-
-	conChecklistApp.factory('CommentSvc', function($http){
-
-		var instance = syncLayerFactory();  
-		instance.setPK('id');
-		instance.setPrefix('comments');
-
-		//Sign off the particular action, for a room, by a contractor
-		instance.setSaveToServer(function(id, params) {
-			return $http.post('/walls_ceilings/comments/' + params.roomid + '/' + params.loc + "/" + params.actionid, params);
-		});
-
-		return instance.$get(); 
+	sync.getAll({param: 1, param2: 'asdf'}).success(function(data){
+		console.log('data from server: ', data); 
 	});
 
-
-#### CRUD with compound primary key and local subquery
-
-	conChecklistApp.factory('SignoffSvc', function($http){
-
-		var instance = syncLayerFactory();  
-
-		//Compound primary key to look in the records to be passed in as an array
-		instance.setPK(['companyid', 'roomid', 'actionid', 'location']);
-
-		instance.setPrefix('signoffs');
-
-		//Filter to perform like a WHERE query, make sure this is where the records returned are equal to the 
-		//the request parameters:  
-		instance.setLSFilter(function(record, params){
-			return record.roomid == params.id && params.loc == record['location'];
-		});
-
-		instance.setGetAllFromServer(function(params) {
-			return $http.get('/walls_ceilings/checklist/' + params.id + '/' + params.loc);
-		});
-		
-		return instance.$get(); 
-	}
-
+	//Save, should call saveToServer() function when online or 
+	//store locally when offline. Performs sync when comes back online
+	sync.save(1, {data: 123}).success(function(serverData){
+		console.log('reply from server save attempt', serverData);
+	});
