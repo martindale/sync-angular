@@ -1,0 +1,22 @@
+{
+  "name": "sync-angular2",
+  "version": "0.0.0",
+  "homepage": "https://github.com/DesertLynx/sync-angular",
+  "authors": [
+    "DesertLynx <contact@davidporter.id.au>"
+  ],
+  "description": "A rewrite of sync-angular: a wrapper for offline use in AngularJS",
+  "main": "src/sync-angular.js",
+  "keywords": [
+    "localStorage",
+    "AngularJS"
+  ],
+  "license": "MIT",
+  "ignore": [
+    "**/.*",
+    "node_modules",
+    "bower_components",
+    "test",
+    "tests"
+  ]
+}
