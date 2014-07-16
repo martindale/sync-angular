@@ -2,9 +2,6 @@ module.exports = function(grunt){
 
 	grunt.initConfig({
 		pkg: grunt.file.readJSON('package.json'),
-		jshint: {
-			all: ['src/**/*.js']
-		},
 		uglify: {
 			options: {
 				// the banner is inserted at the top of the output
@@ -19,9 +16,7 @@ module.exports = function(grunt){
 	});
 	
 	grunt.loadNpmTasks('grunt-contrib-uglify');
-	grunt.loadNpmTasks('grunt-contrib-jshint');
-
-	grunt.registerTask('default', ['jshint', 'uglify']);
+	grunt.registerTask('default', ['uglify']);
 
 };
 

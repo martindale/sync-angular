@@ -1,4 +1,3 @@
-'use strict'
 /* {{{ Documentation: 
 	This is intended to be a system which will operate as a normal CRUD interface while also being able to work offline in a limited capacity. It is an an instantiatable object which can be created
 	as required. It stores data in local-storage and is intended to be plugged into AngularJS. 
@@ -26,17 +25,11 @@
 // {{{ Sync object
 
 var SyncObject = function (options){
+	'use strict';
 
 	var me = this;
 
 	var testingOverride; //an override for online/offline testing behaviour. Should be boolean for overriding state or undefined to be in normal mode
-
-	this.testing = function(set){
-		if(typeof set == 'boolean'){
-			testingOverride = set;
-		}
-		return isOnline();
-	}
 
 	//Determines whether or not the browser is online. Also provides an override for testing
 	var isOnline = function() {
@@ -66,21 +59,21 @@ var SyncObject = function (options){
 	};
 
 	//Clears all of this particular offline stored item from local storage
-	this.clearAll = function() {
+	me.clearAll = function() {
 		keys = _.keys(localStorage);
 
 		for(var i = 0; i < keys.length; i++) {
 			if(keys[i].match(me.prefix))	
 				delete(window.localStorage[keys[i]]);
 		}
-	}
+	};
 	
 	//Adds an item to the local index
 	var addToIndex = function(key) {
 		var index = getIndex();
 		index.push(key);
 		setIndex(index);
-	}
+	};
 
 	//returns true if it finds the result in the index, false if not. 
 	var existsInIndex = function(key) {
@@ -89,7 +82,7 @@ var SyncObject = function (options){
 
 	//Removes an object from the index
 	var rmFromIndex = function(key) {
-		index = getIndex();
+		var index = getIndex();
 		index = _.filter(index, function(el){ return key != el; });
 		setIndex(index);
 	};
@@ -105,7 +98,7 @@ var SyncObject = function (options){
 			genKey.push(record[pk[j]]);
 		}
 		return genKey.join();
-	}
+	}; 
 
 	//Sets local storage
 	try {
@@ -128,7 +121,7 @@ var SyncObject = function (options){
 
 		for(var i = 0; i < keyList.length; i++) {
 			var record = getLS(keyList[i]);
-			if(pk instanceof Array) {
+			if(me.pk instanceof Array) {
 				me.saveToServer(keyList[i].split(','), record);
 			}
 			else {
@@ -149,7 +142,7 @@ var SyncObject = function (options){
 			//Now that it's sent, remove it from local storage. 
 			rmLS(keyList[i]);
 		}
-		getAllFromServer();
+		me.getAllFromServer();
 	};
 
 	//Retrieves an array of record keys for records which have been changed since last connected to the server. 
@@ -206,7 +199,7 @@ var SyncObject = function (options){
 			return filteredResult; 
 		}
 		else {
-			if(postProcessingLS) {
+			if(typeof postProcessingLS != 'undefined') {
 				result = postProcessingLS(result);
 			}
 			return result;
@@ -356,7 +349,10 @@ var SyncObject = function (options){
 	//Function called when going back online. It can be replaced, but by default is just for calling the sync method.
 	var goOnline = function(){ 
 		console.log('Online detected by Syncprovider'); 
-		sync();
+		setTimeout(function(){
+			console.log('Syncing'); 
+			me.sync(); //Sync with a small delay to let the exterior processes catch up and to try and prevent race conditions in saving
+		}, 2000);
 	};
 
 	window.addEventListener("offline", function(e) {
@@ -366,10 +362,6 @@ var SyncObject = function (options){
 	window.addEventListener("online", function(e) {
 		goOnline();
 	});
-	
-	this.sync = function() {
-		sync();	
-	};
 
 	//Get a record from the server or from local storage
 	//@param key string/array The primary key to search for
@@ -400,7 +392,7 @@ var SyncObject = function (options){
 			if(testingOverride)
 				console.log('getting all from server');
 
-			return this.getAllFromServer(params)
+			return me.getAllFromServer(params)
 				.error(function(e){
 					console.error(e);
 				})
@@ -418,7 +410,7 @@ var SyncObject = function (options){
 							for(var i = 0; i < result.length; i++){
 								if(result[i][me.pk])
 									saveLS(result[i][me.pk], result[i], false);
-								else if(me.pk != null && me.pk != undefined) {
+								else if(me.pk !== null && me.pk != undefined) {
 									console.log('Error while trying to save data locally. Appear to be a problem with PK as an index into the results. Key:', me.pk);
 								}
 							}
@@ -483,7 +475,7 @@ var SyncObject = function (options){
 	//Allows overriding of the offline/online behaviour to enable testing
 	//@param expects a single boolean to determine which mode it's in when called, ie true for online
 	//alternatively when called without params, will return the current state
-	this.testing = function(mode) {
+	me.testing = function(mode) {
 		if(typeof mode === 'boolean')
 			testingOverride = mode;
 		return isOnline(); 
