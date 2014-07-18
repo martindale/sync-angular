@@ -367,7 +367,7 @@ var SyncObject = function (options){
 	//@param key string/array The primary key to search for
 	this.get = function(key) {
 		if(isOnline()) {
-			return getFromServer(key);
+			return me.getFromServer(key);
 		}
 		else {
 			return {
@@ -408,10 +408,11 @@ var SyncObject = function (options){
 						}
 						else {
 							for(var i = 0; i < result.length; i++){
-								if(result[i][me.pk])
+								if(typeof result[i][me.pk] !== 'undefined')
 									saveLS(result[i][me.pk], result[i], false);
 								else if(me.pk !== null && me.pk != undefined) {
-									console.log('Error while trying to save data locally. Appear to be a problem with PK as an index into the results. Key:', me.pk);
+									console.error('Error while trying to save data locally. Appear to be a problem with PK as an index into the results. Key:', me.pk);
+									console.log('Data being inserted into:', result[i], 'with: ', result[i][me.pk]);
 								}
 							}
 						}
