@@ -147,18 +147,13 @@ describe('Basic functionality', function(){
 	});
 
 	it('Should get all from the server', function(){
-		console.log(sync);
-		
 		sync.getAll({pk: 2, test: 1}).success(function(data){
-			console.log('data from server: ', data);
 			expect(data[1].pk == 2).toBe(true);
 		});
 	});
 
 	it('Should retain server data after going offline', function(){
-		
 		sync.getAll({pk: 2, test: 1}).success(function(data){
-			console.log('data from server: ', data);
 			expect(data[1].pk == 2).toBe(true);
 		});
 		
@@ -180,6 +175,39 @@ describe('Basic functionality', function(){
 			expect(serverData === 'success on saving to server. Key: 1 data: 123').toBe(true);
 		});
 	});
+
+
+	it('should create a temporary primary key for an object created offline', function(){
+		
+		//Go offline
+		sync.testing(false);
+		
+		sync.save(null, {name: 'testRecord'}).success(function(data){
+			expect(data.pk).not.toBe(false); 
+		});
+	});
 	
+	it('Should give this temporary primary key back in all offline get requests', function(){
+		
+		//Go offline
+		sync.testing(false);
+		
+		sync.save(null, {name: 'testRecord2'});
+		sync.getAll().success(function(data){ 
+			expect(data[0].pk).not.toBe(false);
+			expect(data[0].name).toBe('testRecord2');
+		});
+	});
+
+	it('Should not give the server the temporary primary key on a save', function(){
+		
+		//Go offline
+		sync.testing(false);
+		
+		sync.save(null, {name: 'testRecord3'});
+		expect(sync.testing()).toBe(false); //expect the thing to be offline
+	});
 });
+
+
 

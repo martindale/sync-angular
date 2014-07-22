@@ -60,7 +60,7 @@ var SyncObject = function (options){
 
 	//Clears all of this particular offline stored item from local storage
 	me.clearAll = function() {
-		keys = _.keys(localStorage);
+		var keys = _.keys(localStorage);
 
 		for(var i = 0; i < keys.length; i++) {
 			if(keys[i].match(me.prefix))	
@@ -93,9 +93,9 @@ var SyncObject = function (options){
 
 	//Makes a simple string from the records primary keys internally representing the compound key. Only relevant for compound keys 
 	var makeCompound = function(record) {
-		genKey = [];
-		for(var j = 0; j < pk.length; j++ ){
-			genKey.push(record[pk[j]]);
+		var genKey = [];
+		for(var j = 0; j < me.pk.length; j++ ){
+			genKey.push(record[me.pk[j]]);
 		}
 		return genKey.join();
 	}; 
@@ -126,7 +126,8 @@ var SyncObject = function (options){
 			}
 			else {
 				if(isNewRecord(keyList[i])){
-					me.saveToServer(null, record); //Don't send the internal random key to the server if the record's new. Let the server determine the PK
+					record[me.pk] = null; //Don't send the internal random key to the server if the record's new. Let the server determine the PK
+					me.saveToServer(null, record); 
 				}
 				else if (isDeleted(keyList[i])) {
 					
@@ -180,9 +181,15 @@ var SyncObject = function (options){
 		for(var i = 0; i < index.length; i++){
 			var item = getLS(index[i]);
 			
+			console.log('offline getall, item[pk]', item[me.pk], me.pk, item.newRecord)
+			//If they item is created offline, provide an artificial key as a means to reference it. 
+			if(typeof item[me.pk] == 'undefined' && item.newRecord === true)
+				item[me.pk] = item.saKey;
+			
 			//remove deleted items
 			if(item && !item.deleted)
 				result.push(item);
+
 		}
 
 		//if the local storage filter is set, perform the filter. 
@@ -283,11 +290,17 @@ var SyncObject = function (options){
 			//This is done by just generating some entropy and then storing it as a key in the index. 
 			//If all goes well, the key itself will never actually be used outside this local sync object. 
 			key = randKey();
+			//Give it the SA key if applicable
+			data.saKey = key;
+			data[me.pk] = key; //ADD the internal SA key as temporary PK
 			ls[me.prefix + key] = JSON.stringify({dirty: isDirty, record: data, newRecord: true});
+
 			addToIndex(key);
 		}
+
+		
 		return {
-			success: function(c) {c();}
+			success: function(c) {c(data);}
 		};
 	};
 
@@ -418,7 +431,7 @@ var SyncObject = function (options){
 						}
 					}
 					else {
-						throw ('Primary Key not configured in offline sync adapter. Use setPK() in the provider config');
+						throw ('Primary Key not configured in offline sync adapter. Use "pk" as a parameter in config');
 					}
 				}
 				return {
@@ -449,7 +462,7 @@ var SyncObject = function (options){
 
 	//Clear all this from localstorage
 	this.clearLS = function(){
-		clearAll();
+		me.clearAll();
 	};
 
 	//Save the record either to the server or to local storage
