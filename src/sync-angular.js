@@ -29,12 +29,14 @@ var SyncObject = function (options){
 
 	var me = this;
 
+	//The number of miliseconds before trying to sync after coming online;
+	this.syncTimeout = 2000;
+
 	var testingOverride; //an override for online/offline testing behaviour. Should be boolean for overriding state or undefined to be in normal mode
 
 	//Determines whether or not the browser is online. Also provides an override for testing
 	var isOnline = function() {
 		if(typeof testingOverride !== 'undefined') {
-			console.log('online state is being overridden');
 			return testingOverride;
 		}
 		else return navigator.onLine; 
@@ -336,7 +338,7 @@ var SyncObject = function (options){
 
 	//Simple generation of a little entropy for keys
 	var randKey = function() {
-		return parseInt(Date.now() + Math.random()*1000);
+		return 'saKey' + parseInt(Date.now() + Math.random()*1000);
 	};
 
 	//Remove an object from local storage
@@ -358,14 +360,14 @@ var SyncObject = function (options){
 
 	//Function called when going offline. It exists as an optional add-on and by default does nothing. 
 	var goOffline = function(){ console.log('Offline detected by Syncprovider'); };
-	
+
 	//Function called when going back online. It can be replaced, but by default is just for calling the sync method.
-	var goOnline = function(){ 
+	this.goOnline = function(){ 
 		console.log('Online detected by Syncprovider'); 
 		setTimeout(function(){
 			console.log('Syncing'); 
 			me.sync(); //Sync with a small delay to let the exterior processes catch up and to try and prevent race conditions in saving
-		}, 2000);
+		}, syncTimeout);
 	};
 
 	window.addEventListener("offline", function(e) {
