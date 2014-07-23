@@ -269,7 +269,7 @@ var SyncObject = function (options){
 			if(key instanceof Array) {
 
 				//If it's existing, replace it and signal that it's not a new record. 
-				if(existsInIndex(key.join())) {
+				if(existsInIndex(key.join())) { //FIXME: need to do work to make this work for saKey Generation with compound keys
 					ls[me.prefix+key.join()] = JSON.stringify({dirty: isDirty, record: data, newRecord: false});
 				}
 				else {
@@ -277,8 +277,12 @@ var SyncObject = function (options){
 					addToIndex(key.join());
 				}
 			} else {
-				if(existsInIndex(key)) {
+				if(existsInIndex(key) && !key.match(/saKey/)) {
 					ls[me.prefix+key] = JSON.stringify({dirty: isDirty, record: data, newRecord: false});
+				}
+				//If its one of the internal keys, its still going to be a new record
+				else if(existsInIndex(key) && key.match(/saKey/)){
+					ls[me.prefix + key] = JSON.stringify({dirty: isDirty, record: data, newRecord: true});
 				}
 				else {
 					ls[me.prefix + key] = JSON.stringify({dirty: isDirty, record: data});
