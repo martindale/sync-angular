@@ -183,7 +183,6 @@ var SyncObject = function (options){
 		for(var i = 0; i < index.length; i++){
 			var item = getLS(index[i]);
 			
-			console.log('offline getall, item[pk]', item[me.pk], me.pk, item.newRecord)
 			//If they item is created offline, provide an artificial key as a means to reference it. 
 			if(typeof item[me.pk] == 'undefined' && item.newRecord === true)
 				item[me.pk] = item.saKey;
@@ -367,7 +366,7 @@ var SyncObject = function (options){
 		setTimeout(function(){
 			console.log('Syncing'); 
 			me.sync(); //Sync with a small delay to let the exterior processes catch up and to try and prevent race conditions in saving
-		}, syncTimeout);
+		}, me.syncTimeout);
 	};
 
 	window.addEventListener("offline", function(e) {
@@ -375,7 +374,7 @@ var SyncObject = function (options){
 	});
 
 	window.addEventListener("online", function(e) {
-		goOnline();
+		me.goOnline();
 	});
 
 	//Get a record from the server or from local storage

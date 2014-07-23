@@ -200,12 +200,26 @@ describe('Basic functionality', function(){
 	});
 
 	it('Should not give the server the temporary primary key on a save', function(){
+		var serverMock = function(pk, data) {
+			expect(pk).toBe(null);
+			expect(data.pk).toBe(null);
+			expect(data.name).toBe('testRecord3');
+		};
+		sync = new SyncObject({
+			pk: 'pk',
+			syncTimeout: 0,
+			saveToServer: function(key, data){
+				serverMock(key, data);
+			},
+		});
 		
 		//Go offline
 		sync.testing(false);
-		
+		//Save a record offline 
 		sync.save(null, {name: 'testRecord3'});
-		expect(sync.testing()).toBe(false); //expect the thing to be offline
+		
+		//Go back online and expect that it will save appropriately 
+		sync.sync();
 	});
 });
 
